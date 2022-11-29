@@ -516,7 +516,15 @@ void INDILibCamera::detectCameras()
 
     CameraSP.resize(cameras.size());
     for (size_t i = 0; i < cameras.size(); i++)
+    {
         CameraSP[i].fill(cameras[i]->id().c_str(), cameras[i]->id().c_str(), ISS_OFF);
+
+        // Unreleasing camera causes ERROR DeviceEnumerator device_enumerator.cpp:165 Removing media device /dev/media1 while still in use
+        // After this error Raspberry PI device must be restarted to release camera or wait very long time!
+        // More here: https://lists.libcamera.org/pipermail/libcamera-devel/2020-November/014769.html
+        // and here https://github.com/raspberrypi/libcamera-apps/blob/main/core/options.cpp
+        cameras[i]->release();
+    }
 
     int onIndex = -1;
     if (IUGetConfigOnSwitchIndex(getDeviceName(), "CAMERAS", &onIndex) == 0)
@@ -525,7 +533,6 @@ void INDILibCamera::detectCameras()
         CameraSP[0].setState(ISS_ON);
 
     cameraManager->stop();
-    cameraManager.reset();
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -544,17 +551,19 @@ bool INDILibCamera::Connect()
     try
     {
         m_StillApp.reset(new LibcameraApp(std::make_unique<StillOptions>()));
-        m_VideoApp.reset(new LibcameraEncoder());
-
         auto stillOptions = static_cast<StillOptions *>(m_StillApp->GetOptions());
         stillOptions->Parse(0, nullptr);
+        stillOptions->immediate = true;
         stillOptions->camera = CameraSP.findOnSwitchIndex();
+        //m_StillApp->OpenCamera(); // opening camera here has no effect on EKOS
 
+        // Opening camera for still and video in the same time causes error: FATAL;IPAManager ipa_manager.cpp:109 Multiple IPAManager objects are not allowed
+
+        m_VideoApp.reset(new LibcameraEncoder());
         VideoOptions* videoOptions = m_VideoApp->GetOptions();
         videoOptions->camera = CameraSP.findOnSwitchIndex();
-
-        m_StillApp->OpenCamera();
-        m_VideoApp->OpenCamera();
+        videoOptions->nopreview = true;
+        // m_VideoApp->OpenCamera(); // opening camera here has no effect on EKOS
 
         return true;
     }

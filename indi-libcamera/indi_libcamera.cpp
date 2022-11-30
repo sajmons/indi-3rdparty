@@ -515,6 +515,7 @@ void INDILibCamera::detectCameras()
     }
 
     CameraSP.resize(cameras.size());
+
     for (size_t i = 0; i < cameras.size(); i++)
     {
         CameraSP[i].fill(cameras[i]->id().c_str(), cameras[i]->id().c_str(), ISS_OFF);
@@ -550,11 +551,12 @@ bool INDILibCamera::Connect()
 {
     try
     {
+        /*
         m_StillApp.reset(new LibcameraApp(std::make_unique<StillOptions>()));
         auto stillOptions = static_cast<StillOptions *>(m_StillApp->GetOptions());
         stillOptions->Parse(0, nullptr);
         stillOptions->immediate = true;
-        stillOptions->camera = CameraSP.findOnSwitchIndex();
+        stillOptions->camera = CameraSP.findOnSwitchIndex();        
         //m_StillApp->OpenCamera(); // opening camera here has no effect on EKOS
 
         // Opening camera for still and video in the same time causes error: FATAL;IPAManager ipa_manager.cpp:109 Multiple IPAManager objects are not allowed
@@ -564,7 +566,7 @@ bool INDILibCamera::Connect()
         videoOptions->camera = CameraSP.findOnSwitchIndex();
         videoOptions->nopreview = true;
         // m_VideoApp->OpenCamera(); // opening camera here has no effect on EKOS
-
+        */
         return true;
     }
     catch (std::exception &e)
@@ -588,6 +590,7 @@ bool INDILibCamera::Disconnect()
 /////////////////////////////////////////////////////////////////////////////
 void INDILibCamera::setup()
 {
+
 }
 
 /////////////////////////////////////////////////////////////////////////////
